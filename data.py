@@ -34,7 +34,8 @@ class PrecompDataset(data.Dataset):
         # Captions
         self.captions = []
         with open(loc + '%s_precaps_stan.txt' % data_split, 'rb') as f:
-            for line in f:
+            for idx, line in enumerate(f):
+                print(idx, line)
                 self.captions.append(line.strip())
 
         # Image features
@@ -42,7 +43,7 @@ class PrecompDataset(data.Dataset):
         self.length = len(self.captions)
 
         self.bbox = np.load(loc + '%s_ims_bbx.npy' % data_split)
-        self.sizes = np.load(loc + '%s_ims_size.npy' % data_split)
+        self.sizes = np.load(loc + '%s_ims_size.npy' % data_split, allow_pickle=True)
 
         with open(loc + '%s_caps.json' % data_split) as f:
             self.depends = json.load(f)
@@ -50,6 +51,7 @@ class PrecompDataset(data.Dataset):
         print('image shape', self.images.shape)
         print('text shape', len(self.captions))
 
+        print('cw, redundancy check', self.images.shape[0], self.length)
         # rkiros data has redundancy in images, we divide by 5, 10crop doesn't
         if self.images.shape[0] != self.length:
             self.im_div = 5
@@ -61,16 +63,22 @@ class PrecompDataset(data.Dataset):
 
     def __getitem__(self, index):
         # handle the image redundancy
-        img_id = index / self.im_div
-        image = torch.Tensor(self.images[img_id])
-        caption = self.captions[index]
+        print("re", self.im_div)
+        img_id = int(index / self.im_div)
+        print("print", self.images.shape)
+        print("print", img_id)
+        image = torch.Tensor(self.images[int(img_id)])
+        caption = self.captions[index].decode('utf-8')
         vocab = self.vocab
         depend = self.depends[index]
 
         # Convert caption (string) to word ids.
+        print('caption', caption)
         caps = []
         caps.extend(caption.split(','))
-        caps = map(int, caps)
+        print("caps!", caps)
+        caps = [int(str(i)) for  i in caps]
+        #caps = list(map(int, caps))
 
         # Load bbox and its size
         bboxes = self.bbox[img_id]

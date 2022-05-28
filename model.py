@@ -117,9 +117,10 @@ class EncoderText(nn.Module):
         padded = pad_packed_sequence(out, batch_first=True)
         cap_emb, cap_len = padded
 
+        # cw why not integer
         if self.use_bi_gru:
-            cap_emb = (cap_emb[:, :, :cap_emb.size(2) / 2] +
-                       cap_emb[:, :, cap_emb.size(2) / 2:]) / 2
+            cap_emb = (cap_emb[:, :, :int(cap_emb.size(2) / 2)] +
+                       cap_emb[:, :, int(cap_emb.size(2) / 2):]) / 2
 
         # normalization in the joint embedding space
         if not self.no_txtnorm:
@@ -174,6 +175,8 @@ class GSMN(object):
 
     def __init__(self, opt):
         # Build Models
+        print("stage1")
+        
         self.grad_clip = opt.grad_clip
         self.img_enc = EncoderImagePrecomp(
             opt.img_dim, opt.embed_size, opt.no_imgnorm)
@@ -193,6 +196,7 @@ class GSMN(object):
             self.t2i_match_G.cuda()
             cudnn.benchmark = True
 
+        print("stage2")
         # Loss and Optimizer
         self.criterion = ContrastiveLoss(opt=opt,
                                          margin=opt.margin,
@@ -205,7 +209,7 @@ class GSMN(object):
         self.params = params
 
         self.optimizer = torch.optim.Adam(params, lr=opt.learning_rate)
-
+        print("stage3")
         self.Eiters = 0
         self.opt = opt
 
