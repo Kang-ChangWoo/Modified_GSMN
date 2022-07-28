@@ -69,7 +69,8 @@ class LogCollector(object):
         """Concatenate the meters in one log line
         """
         s = ''
-        for i, (k, v) in enumerate(self.meters.iteritems()):
+        #for i, (k, v) in enumerate(self.meters.iteritems()):
+        for i, (k, v) in enumerate(iter(self.meters.items())):
             if i > 0:
                 s += '  '
             s += k + ' ' + str(v)
@@ -319,8 +320,10 @@ def shard_xattn(model, images, captions, bbox, depends, caplens, opt, shard_size
     """
     Computer pairwise t2i image-caption distance with locality sharding
     """
-    n_im_shard = (len(images) - 1) / shard_size + 1
-    n_cap_shard = (len(captions) - 1) / shard_size + 1
+    #cw added
+    n_im_shard = int((len(images) - 1) / shard_size + 1)
+    #cw added
+    n_cap_shard = int((len(captions) - 1) / shard_size + 1)
 
     d = np.zeros((len(images), len(captions)))
     for i in range(n_im_shard):
